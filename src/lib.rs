@@ -8,12 +8,12 @@ mod render_world;
 pub mod encoder;
 
 use bevy::{
+    image::BevyDefault,
     prelude::*,
     render::{
         camera::RenderTarget,
         render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages},
-        texture::BevyDefault,
     },
     utils::all_tuples,
 };
@@ -122,6 +122,9 @@ pub enum CaptureSource {
 /// Extension trait for the camera to set the target to a headless image.
 /// This is implemented for `Camera`, `Camera2dBundle`, and `Camera3dBundle`.
 ///
+/// (Implementations for `Camera2dBundle` and `Camera3dBundle` will be removed once bevy removes
+/// these structs, which are currently deprecated. They are just kept to ease the transition.)
+///
 /// # Example
 /// ```ignore
 /// # use bevy::prelude::*;
@@ -159,6 +162,8 @@ impl CameraTargetHeadless for Camera {
     }
 }
 
+// Remove once Camera2dBundle is removed
+#[allow(deprecated)]
 impl CameraTargetHeadless for Camera2dBundle {
     fn target_headless(mut self, width: u32, height: u32, images: &mut Assets<Image>) -> Self {
         self.camera = self.camera.target_headless(width, height, images);
@@ -166,6 +171,8 @@ impl CameraTargetHeadless for Camera2dBundle {
     }
 }
 
+// Remove once Camera3dBundle is removed
+#[allow(deprecated)]
 impl CameraTargetHeadless for Camera3dBundle {
     fn target_headless(mut self, width: u32, height: u32, images: &mut Assets<Image>) -> Self {
         self.camera = self.camera.target_headless(width, height, images);

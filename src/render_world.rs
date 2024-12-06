@@ -1,5 +1,7 @@
 use crate::*;
 use bevy::{
+    ecs::entity::EntityHashMap,
+    image::TextureFormatPixelInfo,
     prelude::*,
     render::{
         graph::CameraDriverLabel,
@@ -10,10 +12,9 @@ use bevy::{
             MapMode,
         },
         renderer::{RenderContext, RenderDevice},
-        texture::{GpuImage, TextureFormatPixelInfo},
+        texture::GpuImage,
         Extract, Render, RenderApp, RenderSet,
     },
-    utils::EntityHashMap,
 };
 
 pub struct CaptureRenderWorldPlugin;
@@ -36,7 +37,7 @@ impl Plugin for CaptureRenderWorldPlugin {
 
 #[derive(Default, Resource)]
 struct Captures {
-    captures: EntityHashMap<Entity, ExtractedCapture>,
+    captures: EntityHashMap<ExtractedCapture>,
 }
 
 struct ExtractedCapture {

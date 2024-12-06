@@ -2,7 +2,6 @@ use bevy::{
     app::{RunMode, ScheduleRunnerPlugin},
     prelude::*,
     render::RenderPlugin,
-    sprite::MaterialMesh2dBundle,
     time::TimeUpdateStrategy,
     winit::WinitPlugin,
 };
@@ -61,16 +60,14 @@ fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn((
-        Camera2dBundle::default().target_headless(512, 512, &mut images),
+        Camera2d,
+        Camera::default().target_headless(512, 512, &mut images),
         CaptureBundle::default(),
     ));
 
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Rectangle::new(128.0, 128.0)).into(),
-            material: materials.add(Color::srgb(0.0, 0.0, 1.0)),
-            ..default()
-        },
+        Mesh2d(meshes.add(Rectangle::new(128.0, 128.0))),
+        MeshMaterial2d(materials.add(Color::srgb(0.0, 0.0, 1.0))),
         Cube,
     ));
 }

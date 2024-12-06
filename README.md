@@ -45,7 +45,8 @@ app.add_plugins((
 // Spawn a camera with the CaptureBundle
 fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
   commands.spawn((
-      Camera2dBundle::default().target_headless(512, 512, &mut images),
+      Camera2d,
+      Camera::default().target_headless(512, 512, &mut images),
       CaptureBundle::default(),
   ));
 }
