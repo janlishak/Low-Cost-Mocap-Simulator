@@ -14,8 +14,8 @@ mp4_openh264 = ["dep:mp4", "dep:openh264"]
 mp4_ffmpeg_cli = ["dep:tempdir"]
 
 [dependencies]
-bevy = { version = "0.15.0", default-features = false, features = [
-    "png",                # TODO: Hack to enable bevy_image, see https://github.com/bevyengine/bevy/issues/16563
+bevy = { version = "0.15.3", default-features = false, features = [
+    "bevy_image",
     "bevy_render",
     "bevy_core_pipeline",
     "bevy_asset",
@@ -31,7 +31,7 @@ openh264 = { version = "0.6.2", optional = true }
 tempdir = { version = "0.3.7", optional = true }
 
 [dev-dependencies]
-bevy = "0.15.0"
+bevy = "0.15.3"
 
 [package.metadata.docs.rs]
 all-features = true
