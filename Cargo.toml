@@ -19,6 +19,7 @@ bevy = { version = "0.16.0-rc.5", default-features = false, features = [
     "bevy_render",
     "bevy_core_pipeline",
     "bevy_asset",
+    "bevy_log",
 ] }
 crossbeam-channel = "0.5.13"
 image = { version = "0.25.2", default-features = false }
