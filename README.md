@@ -53,7 +53,7 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
 
 // Start capturing
 fn update(mut capture: Query<&mut Capture>) {
-  let mut capture = capture.single_mut();
+  let mut capture = capture.single_mut().unwrap();
   if !capture.is_capturing() {
     capture.start(
       GifEncoder::new(File::create("my_capture.gif").unwrap())

@@ -8,8 +8,8 @@ use bevy::{
         render_asset::RenderAssets,
         render_graph::{self, NodeRunError, RenderGraph, RenderGraphContext, RenderLabel},
         render_resource::{
-            Buffer, BufferDescriptor, BufferUsages, ImageCopyBuffer, ImageDataLayout, Maintain,
-            MapMode,
+            Buffer, BufferDescriptor, BufferUsages, Maintain, MapMode, TexelCopyBufferInfo,
+            TexelCopyBufferLayout,
         },
         renderer::{RenderContext, RenderDevice},
         texture::GpuImage,
@@ -114,7 +114,7 @@ fn extract_captures(
                         _ => None,
                     });
                 let source = match source {
-                    Some(source) => source,
+                    Some(source) => source.handle,
                     None => {
                         return Some((
                             entity,
@@ -179,20 +179,20 @@ impl render_graph::Node for ImageCopyDriver {
             // That's why image in buffer can be little bit wider
             // This should be taken into account at copy from buffer stage
             let padded_bytes_per_row = RenderDevice::align_copy_bytes_per_row(
-                (src_image.size.x as usize / block_dimensions.0 as usize) * block_size as usize,
+                (src_image.size.width as usize / block_dimensions.0 as usize) * block_size as usize,
             );
 
             let texture_extent = Extent3d {
-                width: src_image.size.x,
-                height: src_image.size.y,
+                width: src_image.size.width,
+                height: src_image.size.height,
                 depth_or_array_layers: 1,
             };
 
             encoder.copy_texture_to_buffer(
                 src_image.texture.as_image_copy(),
-                ImageCopyBuffer {
+                TexelCopyBufferInfo {
                     buffer: &capture_state.target_buffer,
-                    layout: ImageDataLayout {
+                    layout: TexelCopyBufferLayout {
                         offset: 0,
                         bytes_per_row: Some(
                             std::num::NonZeroU32::new(padded_bytes_per_row as u32)
@@ -242,15 +242,21 @@ fn encode(mut captures: ResMut<Captures>, render_device: Res<RenderDevice>) {
                 .pixel_size();
         let aligned_row_bytes = RenderDevice::align_copy_bytes_per_row(row_bytes);
         if row_bytes == aligned_row_bytes {
-            capture_state.target_image.data.clone_from(&buffer_bytes);
+            capture_state
+                .target_image
+                .data
+                .get_or_insert_default()
+                .clone_from(&buffer_bytes);
         } else {
             // shrink data to original image size
-            capture_state.target_image.data = buffer_bytes
-                .chunks(aligned_row_bytes)
-                .take(capture_state.target_image.height() as usize)
-                .flat_map(|row| &row[..row_bytes.min(row.len())])
-                .cloned()
-                .collect();
+            capture_state.target_image.data = Some(
+                buffer_bytes
+                    .chunks(aligned_row_bytes)
+                    .take(capture_state.target_image.height() as usize)
+                    .flat_map(|row| &row[..row_bytes.min(row.len())])
+                    .cloned()
+                    .collect(),
+            );
         }
 
         // Call the encoder

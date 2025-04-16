@@ -78,7 +78,7 @@ fn update(
     mut cubes: Query<&mut Transform, With<Cube>>,
     mut frame: Local<u32>,
 ) {
-    let mut capture = capture.single_mut();
+    let mut capture = capture.single_mut().unwrap();
     if !capture.is_capturing() {
         capture.start((
             gif::GifEncoder::new(fs::File::create("captures/simple/simple.gif").unwrap())
@@ -102,6 +102,6 @@ fn update(
 
     *frame += 1;
     if *frame >= 15 {
-        app_exit.send(AppExit::Success);
+        app_exit.write(AppExit::Success);
     }
 }

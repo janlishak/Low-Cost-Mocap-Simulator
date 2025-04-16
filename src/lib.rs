@@ -15,9 +15,9 @@ use bevy::{
         render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages},
     },
-    utils::all_tuples,
 };
 use std::sync::Mutex;
+use variadics_please::all_tuples;
 
 #[doc(inline)]
 pub use encoder::Encoder;
@@ -120,10 +120,6 @@ pub enum CaptureSource {
 }
 
 /// Extension trait for the camera to set the target to a headless image.
-/// This is implemented for `Camera`, `Camera2dBundle`, and `Camera3dBundle`.
-///
-/// (Implementations for `Camera2dBundle` and `Camera3dBundle` will be removed once bevy removes
-/// these structs, which are currently deprecated. They are just kept to ease the transition.)
 ///
 /// # Example
 /// ```ignore
@@ -131,7 +127,7 @@ pub enum CaptureSource {
 /// # use bevy_capture::CameraTargetHeadless;
 /// #
 /// fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>) {
-///    commands.spawn(Camera2dBundle::default().target_headless(512, 512, &mut images));
+///    commands.spawn((Camera2d, Camera::default().target_headless(512, 512, &mut images)));
 /// }
 /// ```
 pub trait CameraTargetHeadless {
@@ -156,26 +152,8 @@ impl CameraTargetHeadless for Camera {
             | TextureUsages::RENDER_ATTACHMENT
             | TextureUsages::TEXTURE_BINDING;
 
-        self.target = RenderTarget::Image(images.add(image));
+        self.target = RenderTarget::Image(images.add(image).into());
 
-        self
-    }
-}
-
-// Remove once Camera2dBundle is removed
-#[allow(deprecated)]
-impl CameraTargetHeadless for Camera2dBundle {
-    fn target_headless(mut self, width: u32, height: u32, images: &mut Assets<Image>) -> Self {
-        self.camera = self.camera.target_headless(width, height, images);
-        self
-    }
-}
-
-// Remove once Camera3dBundle is removed
-#[allow(deprecated)]
-impl CameraTargetHeadless for Camera3dBundle {
-    fn target_headless(mut self, width: u32, height: u32, images: &mut Assets<Image>) -> Self {
-        self.camera = self.camera.target_headless(width, height, images);
         self
     }
 }
