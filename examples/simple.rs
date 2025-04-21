@@ -1,15 +1,10 @@
-use bevy::{
-    app::{RunMode, ScheduleRunnerPlugin},
-    prelude::*,
-    render::RenderPlugin,
-    time::TimeUpdateStrategy,
-    winit::WinitPlugin,
-};
+use bevy::{prelude::*, render::RenderPlugin};
+use bevy_flycam::prelude::*;
 use bevy_capture::{
     encoder::frames,
     CameraTargetHeadless, Capture, CaptureBundle,
 };
-use std::{f32::consts::TAU, fs, time::Duration};
+use std::{f32::consts::TAU, fs};
 
 fn main() -> AppExit {
     // Create the captures directory
@@ -18,34 +13,33 @@ fn main() -> AppExit {
     let mut app = App::new();
 
     app.add_plugins((
-        DefaultPlugins,
-            // .build()
-            // // Disable the WinitPlugin to prevent the creation of a window
-            // // .disable::<WinitPlugin>()
-            // // Make sure pipelines are ready before rendering
-            // .set(RenderPlugin {
-            //     synchronous_pipeline_compilation: true,
-            //     ..default()
-            // }),
-        // Add the ScheduleRunnerPlugin to run the app in loop mode
-        // ScheduleRunnerPlugin {
-        //     run_mode: RunMode::Loop { wait: None },
-        // },
-        // Add the CapturePlugin
+        DefaultPlugins.set(RenderPlugin {
+            synchronous_pipeline_compilation: true,
+            ..default()
+        }),
         bevy_capture::CapturePlugin,
     ));
 
-    // Update the time at a fixed rate of 60 FPS
-    // app.insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f64(
-    //     1.0 / 60.0,
-    // )));
+    app.add_plugins(NoCameraPlayerPlugin);
 
-    // Setup
-    // app.add_systems(Startup, setup);
-
-    // Update
     app.add_systems(Update, update);
     app.add_systems(Startup, setup_3d);
+
+
+    app.insert_resource(MovementSettings {
+        sensitivity: 0.00015, // default: 0.00012
+        speed: 12.0, // default: 12.0
+    });
+    app.insert_resource(KeyBindings {
+        move_ascend: KeyCode::KeyE,
+        move_descend: KeyCode::KeyQ,
+        ..Default::default()
+    });
+
+    app.insert_resource(Recording::default());
+
+    app.add_systems(Update, toggle_recording);
+    app.add_systems(Update, monitor_recording);
 
     // Run the app
     app.run()
@@ -54,23 +48,28 @@ fn main() -> AppExit {
 #[derive(Component)]
 struct Cube;
 
-fn setup(
-    mut commands: Commands,
-    mut images: ResMut<Assets<Image>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    commands.spawn((
-        Camera2d,
-        Camera::default().target_headless(512, 512, &mut images),
-        CaptureBundle::default(),
-    ));
+#[derive(Resource, Default)]
+struct Recording {
+    active: bool,
+}
 
-    commands.spawn((
-        Mesh2d(meshes.add(Rectangle::new(128.0, 128.0))),
-        MeshMaterial2d(materials.add(Color::srgb(0.0, 0.0, 1.0))),
-        Cube,
-    ));
+fn toggle_recording(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut recording: ResMut<Recording>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        recording.active = !recording.active;
+        info!("Recording toggled: {}", recording.active);
+    }
+}
+
+fn monitor_recording(recording: Res<Recording>) {
+    if recording.active {
+        // Replace with capture logic
+        info!("Recording is active.");
+    } else {
+        info!("Recording is inactive.");
+    }
 }
 
 fn setup_3d(
@@ -100,28 +99,67 @@ fn setup_3d(
         },
         Transform::from_xyz(4.0, 8.0, 4.0),
     ));
+
     // camera
-    commands.spawn((
+    commands
+    .spawn((
+        FlyCam,
+        Camera3d::default(),
+        Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ))
+    .with_child((
         Camera3d::default(),
         Camera::default().target_headless(512, 512, &mut images),
-        Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
         CaptureBundle::default(),
     ));
+
+    
 }
+
+// fn update(
+//     mut app_exit: EventWriter<AppExit>,
+//     mut capture: Query<&mut Capture>,
+//     mut cubes: Query<&mut Transform, With<Cube>>,
+//     mut frame: Local<u32>,
+// ) {
+//     let mut capture = capture.single_mut().unwrap();
+//     if !capture.is_capturing() {
+//         capture.start(frames::FramesEncoder::new("captures/simple/frames"));
+//     }
+
+//     for mut transform in &mut cubes {
+//         transform.rotation = Quat::from_rotation_y(*frame as f32 / 60.0 * TAU)
+//     }
+
+//     *frame += 1;
+
+//     if *frame >= 15 {
+//         capture.stop();
+//         println!("Done");
+//         app_exit.write(AppExit::Success);
+//     }
+// }
+
 
 fn update(
     mut app_exit: EventWriter<AppExit>,
     mut capture: Query<&mut Capture>,
     mut cubes: Query<&mut Transform, With<Cube>>,
     mut frame: Local<u32>,
+    mut recording: ResMut<Recording>,
 ) {
+    if !recording.active {
+        return;
+    }
+
     let mut capture = capture.single_mut().unwrap();
+
     if !capture.is_capturing() {
         capture.start(frames::FramesEncoder::new("captures/simple/frames"));
     }
-
+ 
     for mut transform in &mut cubes {
-        transform.rotation = Quat::from_rotation_y(*frame as f32 / 60.0 * TAU)
+        transform.rotation = Quat::from_rotation_y(*frame as f32 / 60.0 * TAU);
     }
 
     *frame += 1;
@@ -129,6 +167,7 @@ fn update(
     if *frame >= 15 {
         capture.stop();
         println!("Done");
-        app_exit.write(AppExit::Success);
+        recording.active = false;
+        // app_exit.write(AppExit::Success);
     }
 }
