@@ -2,6 +2,7 @@
 
 pub mod frames;
 
+pub mod mem_encoder;
 #[cfg(feature = "gif")]
 pub mod gif;
 
@@ -10,6 +11,7 @@ pub mod mp4_openh264;
 
 #[cfg(feature = "mp4_ffmpeg_cli")]
 pub mod mp4_ffmpeg_cli;
+
 
 use bevy::prelude::*;
 

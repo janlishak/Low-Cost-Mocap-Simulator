@@ -7,6 +7,8 @@ mod render_world;
 
 pub mod encoder;
 
+pub mod animation;
+
 use bevy::{
     image::BevyDefault,
     prelude::*,
